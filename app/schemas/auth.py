@@ -13,3 +13,13 @@ class AuthTokensResponse(BaseModel):
 
 class RefreshResponse(BaseModel):
     csrf_token: str
+
+
+class FetchTokenRequest(BaseModel):
+    id_token: str = Field(min_length=20, description="Google ID token")
+
+
+class FetchTokenResponse(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+    user: dict

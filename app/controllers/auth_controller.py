@@ -1,7 +1,12 @@
 from fastapi import Request, Response
+from google.oauth2 import id_token
+from google.auth.transport import requests as google_auth_requests
+import requests as http_requests
 from app.core.config import get_settings
 from app.schemas.auth import AuthTokensResponse, GoogleLoginRequest, RefreshResponse
 from app.services.auth_service import AuthService
+from app.db.mongo import get_database
+from motor.motor_asyncio import AsyncIOMotorDatabase
 
 
 def _set_auth_cookies(
@@ -102,3 +107,58 @@ class AuthController:
             user_agent=user_agent,
         )
         _clear_auth_cookies(response)
+
+    def verify_google_token(self, token: str) -> tuple[str | None, bool]:
+        settings = get_settings()
+        session = http_requests.Session()
+        session.verify = False
+        google_request = google_auth_requests.Request(session=session)
+        idinfo = id_token.verify_oauth2_token(
+            token,
+            google_request,
+            settings.google_client_id,
+        )
+        email = idinfo.get("email")
+        email_verified = idinfo.get("email_verified", False)
+        return email, email_verified
+
+    async def check_user_by_token(self, token: str, db: AsyncIOMotorDatabase) -> dict:
+        email, email_verified = self.verify_google_token(token)
+        if not email or not email_verified:
+            raise ValueError("Google token has unverified or missing email")
+        user = await db["users"].find_one({"email": email})
+        if not user:
+            return None
+        return {"id": str(user["_id"]), "fullName": user.get("fullName", ""), "email": user["email"]}
+
+    async def fetch_token(self, google_id_token: str, db: AsyncIOMotorDatabase) -> dict:
+        from app.core.security import create_access_token
+        import secrets
+        import uuid
+        email, email_verified = self.verify_google_token(google_id_token)
+        if not email or not email_verified:
+            raise ValueError("Google token has unverified or missing email")
+        user = await db["users"].find_one({"email": email})
+        if not user:
+            raise ValueError("User not found")
+        user_id = str(user["_id"])
+        session_id = str(uuid.uuid4())
+        csrf_token = secrets.token_urlsafe(32)
+        access_token = create_access_token(user_id, session_id, csrf_token)
+        return {
+            "access_token": access_token,
+            "token_type": "bearer",
+            "user": {"id": user_id, "fullName": user.get("fullName", ""), "email": user["email"]},
+        }
+
+    async def check_user(self, email: str, db: AsyncIOMotorDatabase) -> dict:
+        user = await db["users"].find_one({"email": email})
+        if not user:
+            return None
+        return {"id": str(user["_id"]), "fullName": user.get("fullName", ""), "email": user["email"]}
+
+    async def check_user(self, email: str, db: AsyncIOMotorDatabase) -> dict:
+        user = await db["users"].find_one({"email": email})
+        if not user:
+            return None
+        return {"id": str(user["_id"]), "fullName": user["fullName"], "email": user["email"]}

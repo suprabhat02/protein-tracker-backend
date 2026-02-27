@@ -1,5 +1,6 @@
 from datetime import datetime
 from pydantic import BaseModel, EmailStr
+from bson import ObjectId
 
 
 class UserModel(BaseModel):
@@ -14,3 +15,9 @@ class UserModel(BaseModel):
     preferences: dict[str, str | int | bool]
     created_at: datetime
     updated_at: datetime
+
+
+class User(BaseModel):
+    id: ObjectId
+    fullName: str
+    email: EmailStr

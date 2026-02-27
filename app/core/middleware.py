@@ -64,6 +64,7 @@ class CsrfMiddleware(BaseHTTPMiddleware):
         "/health",
         "/api/v1/auth/google/login",
         "/api/v1/auth/refresh",
+        "/api/v1/auth/fetch/token",
     }
 
     async def dispatch(self, request: Request, call_next):

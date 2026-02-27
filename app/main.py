@@ -36,7 +36,13 @@ def create_app() -> FastAPI:
     settings = get_settings()
     configure_logging()
 
-    app = FastAPI(title=settings.app_name, lifespan=lifespan)
+    app = FastAPI(
+        title=settings.app_name,
+        lifespan=lifespan,
+        docs_url="/docs",
+        redoc_url="/redoc",
+        default_response_class=ORJSONResponse,
+    )
     app.state.limiter = limiter
 
     app.add_middleware(SlowAPIMiddleware)

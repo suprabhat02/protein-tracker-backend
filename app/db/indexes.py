@@ -3,18 +3,19 @@ from motor.motor_asyncio import AsyncIOMotorDatabase
 
 
 async def ensure_indexes(db: AsyncIOMotorDatabase) -> None:
-    await db.users.create_index([("email", ASCENDING)], unique=True, name="uniq_email")
+    await db.users.create_index([("email", ASCENDING)], unique=True, sparse=True, name="uniq_email")
     await db.users.create_index(
         [("provider", ASCENDING), ("provider_sub", ASCENDING)],
         unique=True,
+        sparse=True,
         name="uniq_provider_sub",
     )
     await db.users.create_index(
-        [("public_id", ASCENDING)], unique=True, name="uniq_user_public_id"
+        [("public_id", ASCENDING)], unique=True, sparse=True, name="uniq_user_public_id"
     )
 
     await db.sessions.create_index(
-        [("session_id", ASCENDING)], unique=True, name="uniq_session_id"
+        [("session_id", ASCENDING)], unique=True, sparse=True, name="uniq_session_id"
     )
     await db.sessions.create_index(
         [("user_id", ASCENDING), ("created_at", DESCENDING)], name="idx_user_sessions"

@@ -26,10 +26,17 @@ from app.db.mongo import mongo_manager
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
-    await mongo_manager.connect()
-    await ensure_indexes(mongo_manager.db)
+    try:
+        await mongo_manager.connect()
+        await ensure_indexes(mongo_manager.db)
+    except Exception as e:
+        print(f"Warning: Failed to initialize database: {e}")
+        print("App will continue running but database operations may fail.")
     yield
-    await mongo_manager.disconnect()
+    try:
+        await mongo_manager.disconnect()
+    except Exception as e:
+        print(f"Warning: Failed to disconnect from database: {e}")
 
 
 def create_app() -> FastAPI:

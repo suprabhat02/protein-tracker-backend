@@ -1,4 +1,4 @@
-from app.schemas.user import UpdateProfileRequest, UserResponse
+from app.schemas.user import CreateUserRequest, UpdateProfileRequest, UserResponse
 from app.services.user_service import UserService
 
 
@@ -13,3 +13,14 @@ class UserController:
         self, user_id: str, payload: UpdateProfileRequest
     ) -> UserResponse:
         return await self.user_service.update_profile(user_id, payload)
+
+    async def create_user(self, payload: CreateUserRequest) -> UserResponse:
+        return await self.user_service.create_user(payload)
+
+    async def get_profile_by_email(self, email: str) -> UserResponse:
+        return await self.user_service.get_profile_by_email(email)
+
+    async def update_profile_by_email(
+        self, email: str, payload: UpdateProfileRequest
+    ) -> UserResponse:
+        return await self.user_service.update_profile_by_email(email, payload)

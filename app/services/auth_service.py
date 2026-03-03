@@ -7,6 +7,7 @@ from app.repositories.user_repository import UserRepository
 from app.schemas.user import UserResponse
 from app.services.audit_service import AuditService
 from app.services.token_service import TokenService
+from app.utils.hashids import encode_identifier
 
 
 class AuthService:
@@ -23,13 +24,19 @@ class AuthService:
         self.audit_service = audit_service
 
     def _to_user_response(self, user_doc: dict) -> UserResponse:
+        from app.schemas.user import LifestyleGoal
+        lifestyle_raw = user_doc.get("lifestyle")
+        lifestyle = LifestyleGoal(lifestyle_raw) if lifestyle_raw else None
+        # Fallback to encoded _id if public_id is missing
+        public_id = user_doc.get("public_id") or encode_identifier(str(user_doc["_id"]))
         return UserResponse(
-            id=user_doc["public_id"],
+            id=public_id,
             email=user_doc["email"],
             full_name=user_doc["full_name"],
-            avatar_url=user_doc.get("avatar_url"),
             daily_protein_target=user_doc["daily_protein_target"],
-            preferences=user_doc.get("preferences", {}),
+            weight_kg=user_doc.get("weight_kg"),
+            height_cm=user_doc.get("height_cm"),
+            lifestyle=lifestyle,
             created_at=user_doc["created_at"],
             updated_at=user_doc["updated_at"],
         )
@@ -79,7 +86,6 @@ class AuthService:
             user_doc = await self.user_repository.create_google_user(
                 email=email,
                 full_name=full_name or email.split("@")[0],
-                avatar_url=avatar_url,
                 provider_sub=provider_sub,
             )
 

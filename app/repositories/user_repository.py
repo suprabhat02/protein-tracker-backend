@@ -24,18 +24,50 @@ class UserRepository:
         *,
         email: str,
         full_name: str,
-        avatar_url: str | None,
         provider_sub: str,
+        weight_kg: float | None = None,
+        height_cm: float | None = None,
+        lifestyle: str | None = None,
+        daily_protein_target: int = 120,
     ) -> dict:
         now = datetime.now(UTC)
         document = {
             "email": email.lower(),
             "full_name": full_name,
-            "avatar_url": avatar_url,
             "provider": "google",
             "provider_sub": provider_sub,
-            "daily_protein_target": 120,
-            "preferences": {"unit_system": "metric", "theme": "system"},
+            "daily_protein_target": daily_protein_target,
+            "weight_kg": weight_kg,
+            "height_cm": height_cm,
+            "lifestyle": lifestyle,
+            "created_at": now,
+            "updated_at": now,
+        }
+        result = await self.collection.insert_one(document)
+        await self.collection.update_one(
+            {"_id": result.inserted_id},
+            {"$set": {"public_id": encode_identifier(str(result.inserted_id))}},
+        )
+        return await self.collection.find_one({"_id": result.inserted_id})
+
+    async def create_user(
+        self,
+        *,
+        email: str,
+        full_name: str,
+        weight_kg: float,
+        height_cm: float,
+        lifestyle: str,
+        daily_protein_target: int,
+    ) -> dict:
+        now = datetime.now(UTC)
+        document = {
+            "email": email.lower(),
+            "full_name": full_name,
+            "daily_protein_target": daily_protein_target,
+            "weight_kg": weight_kg,
+            "height_cm": height_cm,
+            "lifestyle": lifestyle,
             "created_at": now,
             "updated_at": now,
         }
@@ -52,19 +84,25 @@ class UserRepository:
         *,
         full_name: str,
         daily_protein_target: int,
-        preferences: dict,
+        weight_kg: float | None = None,
+        height_cm: float | None = None,
+        lifestyle: str | None = None,
     ) -> dict:
         now = datetime.now(UTC)
+        update_fields: dict = {
+            "full_name": full_name,
+            "daily_protein_target": daily_protein_target,
+            "updated_at": now,
+        }
+        if weight_kg is not None:
+            update_fields["weight_kg"] = weight_kg
+        if height_cm is not None:
+            update_fields["height_cm"] = height_cm
+        if lifestyle is not None:
+            update_fields["lifestyle"] = lifestyle
         await self.collection.update_one(
             {"_id": ObjectId(user_id)},
-            {
-                "$set": {
-                    "full_name": full_name,
-                    "daily_protein_target": daily_protein_target,
-                    "preferences": preferences,
-                    "updated_at": now,
-                }
-            },
+            {"$set": update_fields},
         )
         user = await self.find_by_id(user_id)
         if user is None:

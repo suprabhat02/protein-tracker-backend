@@ -108,3 +108,8 @@ class UserRepository:
         if user is None:
             raise RuntimeError("User not found after update.")
         return user
+
+    async def delete_user(self, user_id: str) -> None:
+        result = await self.collection.delete_one({"_id": ObjectId(user_id)})
+        if result.deleted_count == 0:
+            raise RuntimeError("User not found or already deleted.")

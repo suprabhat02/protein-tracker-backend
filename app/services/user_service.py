@@ -109,3 +109,11 @@ class UserService:
             lifestyle=payload.lifestyle.value if payload.lifestyle else None,
         )
         return self._to_response(updated)
+
+    async def delete_user_by_email(self, email: str) -> None:
+        user_doc = await self.user_repository.find_by_email(email)
+        if user_doc is None:
+            raise AppException("USER_NOT_FOUND", "User not found.", 404)
+
+        user_id = str(user_doc["_id"])
+        await self.user_repository.delete_user(user_id)

@@ -24,3 +24,6 @@ class UserController:
         self, email: str, payload: UpdateProfileRequest
     ) -> UserResponse:
         return await self.user_service.update_profile_by_email(email, payload)
+
+    async def delete_user_by_email(self, email: str) -> None:
+        await self.user_service.delete_user_by_email(email)

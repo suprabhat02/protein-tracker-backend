@@ -41,3 +41,12 @@ async def update_profile(
 ) -> ApiResponse[UserResponse]:
     result = await controller.update_profile_by_email(email, payload)
     return ApiResponse(data=result)
+
+
+@router.delete("/me", response_model=ApiResponse[dict], status_code=200)
+async def delete_user(
+    email: str,
+    controller: UserController = Depends(get_user_controller),
+) -> ApiResponse[dict]:
+    await controller.delete_user_by_email(email)
+    return ApiResponse(data={"message": "User deleted successfully"})

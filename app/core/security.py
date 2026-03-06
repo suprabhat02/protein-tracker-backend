@@ -52,9 +52,19 @@ def create_refresh_token(subject: str, session_id: str, token_id: str) -> str:
 
 def decode_access_token(token: str) -> dict[str, Any]:
     settings = get_settings()
-    return jwt.decode(token, settings.jwt_access_secret, algorithms=["HS256"])
+    return jwt.decode(
+        token,
+        settings.jwt_access_secret,
+        algorithms=["HS256"],
+        options={"leeway": 10}  # Allow 10 seconds clock skew
+    )
 
 
 def decode_refresh_token(token: str) -> dict[str, Any]:
     settings = get_settings()
-    return jwt.decode(token, settings.jwt_refresh_secret, algorithms=["HS256"])
+    return jwt.decode(
+        token,
+        settings.jwt_refresh_secret,
+        algorithms=["HS256"],
+        options={"leeway": 10}  # Allow 10 seconds clock skew
+    )
